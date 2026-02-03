@@ -8,11 +8,12 @@
   <img src="https://img.shields.io/badge/license-ISC-green" alt="license">
 </p>
 
-> 🎯 **为 [OpenClaw](https://github.com/anthropics/clawdbot) 生态研发的股票行情 MCP Server**
+> 🎯 **为 [OpenClaw](https://github.com/anthropics/clawdbot) 生态研发的股票行情 MCP + Skills 完整解决方案**
 
-基于 [stock-sdk](https://www.npmjs.com/package/stock-sdk) 构建的 **MCP (Model Context Protocol) Server**，为 AI 编程助手提供**实时股票行情数据能力**。
+基于 [stock-sdk](https://www.npmjs.com/package/stock-sdk) 构建，本项目不仅提供底层的 **MCP (Model Context Protocol) Server**，还内置了一套专业的 **AI Skills (量化技能)**。它能让你的 AI 助手（如 Cursor、Claude、OpenClaw 等）瞬间化身为具备实时数据、技术分析和策略筛选能力的"顶级金融顾问"。
 
-同时兼容 **Cursor**、**Claude Desktop**、**Antigravity（Gemini Pro）**、**Codex CLI**、**Gemini CLI** 等主流 AI 工具。
+支持 **OpenClaw**、**Cursor**、**Claude Desktop**、**Antigravity**、**Gemini/Codex CLI** 等主流 AI 工具。
+
 
 ## ✨ 特性
 
@@ -310,6 +311,27 @@ gemini "帮我获取腾讯控股的日 K 线并计算均线"
 | `get_panel_large_order` | 获取盘口大单占比 |
 | `get_trading_calendar` | 获取 A 股交易日历 |
 | `get_dividend_detail` | 获取分红派送详情 |
+
+---
+
+## 🧠 AI Skills (技能)
+
+Skills 是一组预定义的"场景化指令"，将多个 MCP Tools 组合成专业的工作流。本项目专为 **OpenClaw** 提供了开箱即用的技能支持。
+
+| Skill | 描述 | 包含步骤 |
+|-------|------|----------|
+| [股票技术分析专家](./skills/stock-analyst/SKILL.md) | 深度分析 K 线形态与指标 | 行情查询 -> 历史 K 线 -> 指标计算 (MACD/RSI/BOLL) -> 综合诊断 |
+| [智能股票筛选器](./skills/stock-screener/SKILL.md) | 按策略筛选全市场标的 | 范围定位 (如科创板) -> 批量数据获取 -> 条件过滤 -> 排序输出 |
+| [市场深度概览](./skills/market-overview/SKILL.md) | 快速把握全局行情 | 指数汇总 -> 行业/概念板块排名 -> 情绪评估 -> 简评报告 |
+| [自选股实时监控](./skills/realtime-monitor/SKILL.md) | 持续跟踪并计算损益 | 批量行情监控 -> 异动检测 -> 持仓成本对比 -> 价格提醒 |
+
+#### 💬 技能使用示例：
+- **技术分析**："分析一下**腾讯**最近的走势，帮我看看 **MACD** 什么时候金叉？"
+- **策略筛选**："帮我找出今天**科创板**里涨幅前 10 且**市盈率**低于 50 的股票。"
+- **市场全局**："现在**盘面表现**如何？有哪些**热门概念**值得关注？"
+- **损益监控**："查一下我的持仓：**茅台**买入价 1400，**美团**买入价 120。"
+
+> 💡 关于如何在 OpenClaw、Cursor 等工具中使用这些技能，请参阅 [Skills 使用指南](./skills/README.md)。
 
 ---
 
