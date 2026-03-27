@@ -24,9 +24,9 @@ const GetAShareCodeListSchema = z.object({
 
 const GetUSCodeListSchema = z.object({
   market: z
-    .enum(['all', 'NASDAQ', 'NYSE'])
+    .enum(['all', 'NASDAQ', 'NYSE', 'AMEX'])
     .optional()
-    .describe('市场筛选: all=全部, NASDAQ=纳斯达克, NYSE=纽交所'),
+    .describe('市场筛选: all=全部, NASDAQ=纳斯达克, NYSE=纽交所, AMEX=美交所'),
   simple: z
     .boolean()
     .optional()
@@ -38,58 +38,39 @@ const GetUSCodeListSchema = z.object({
 export const batchTools: Tool[] = [
   {
     name: 'get_a_share_code_list',
-    description:
-      '获取全部 A 股代码列表（5000+ 只），支持按市场筛选（上证/深证/北证/科创板/创业板）',
+    description: '获取全部 A 股代码列表（5000+ 只），支持按市场筛选（上证/深证/北证/科创板/创业板）',
     inputSchema: {
       type: 'object',
       properties: {
-        market: {
-          type: 'string',
-          enum: ['all', 'sh', 'sz', 'bj', 'kc', 'cy'],
-          description:
-            '市场筛选: all=全部(默认), sh=上证, sz=深证, bj=北证, kc=科创板, cy=创业板',
-        },
-        simple: {
-          type: 'boolean',
-          description: '是否返回简单代码（不带交易所前缀），默认 false',
-        },
+        market: { type: 'string', enum: ['all', 'sh', 'sz', 'bj', 'kc', 'cy'], description: '市场筛选: all=全部(默认), sh=上证, sz=深证, bj=北证, kc=科创板, cy=创业板' },
+        simple: { type: 'boolean', description: '是否返回简单代码（不带交易所前缀），默认 false' },
       },
     },
+    annotations: { title: 'A 股代码列表', readOnlyHint: true, openWorldHint: true },
   },
   {
     name: 'get_hk_code_list',
     description: '获取全部港股代码列表（2000+ 只）',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-    },
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { title: '港股代码列表', readOnlyHint: true, openWorldHint: true },
   },
   {
     name: 'get_us_code_list',
-    description:
-      '获取全部美股代码列表（8000+ 只），支持按市场筛选（纳斯达克/纽交所）',
+    description: '获取全部美股代码列表（8000+ 只），支持按市场筛选（纳斯达克/纽交所/美交所）',
     inputSchema: {
       type: 'object',
       properties: {
-        market: {
-          type: 'string',
-          enum: ['all', 'NASDAQ', 'NYSE'],
-          description: '市场筛选: all=全部(默认), NASDAQ=纳斯达克, NYSE=纽交所',
-        },
-        simple: {
-          type: 'boolean',
-          description: '是否返回简单代码（不带市场前缀），默认 false',
-        },
+        market: { type: 'string', enum: ['all', 'NASDAQ', 'NYSE', 'AMEX'], description: '市场筛选: all=全部(默认), NASDAQ=纳斯达克, NYSE=纽交所, AMEX=美交所' },
+        simple: { type: 'boolean', description: '是否返回简单代码（不带市场前缀），默认 false' },
       },
     },
+    annotations: { title: '美股代码列表', readOnlyHint: true, openWorldHint: true },
   },
   {
     name: 'get_fund_code_list',
     description: '获取全部基金代码列表（26000+ 只）',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-    },
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { title: '基金代码列表', readOnlyHint: true, openWorldHint: true },
   },
 ];
 
@@ -125,9 +106,9 @@ export function createBatchHandlers(
 
     get_us_code_list: async (args) => {
       const { market, simple } = GetUSCodeListSchema.parse(args);
-      const options: { market?: 'NASDAQ' | 'NYSE'; simple?: boolean } = {};
+      const options: { market?: 'NASDAQ' | 'NYSE' | 'AMEX'; simple?: boolean } = {};
       if (market && market !== 'all') {
-        options.market = market as 'NASDAQ' | 'NYSE';
+        options.market = market as 'NASDAQ' | 'NYSE' | 'AMEX';
       }
       if (simple !== undefined) {
         options.simple = simple;

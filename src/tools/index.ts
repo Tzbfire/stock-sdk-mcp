@@ -5,13 +5,15 @@
 import type { StockSDK } from 'stock-sdk';
 import type { Tool, ToolHandler } from './types.js';
 
-// 导入所有 Tools 定义
 import { quoteTools, createQuoteHandlers } from './quotes.js';
 import { klineTools, createKlineHandlers } from './kline.js';
 import { searchTools, createSearchHandlers } from './search.js';
 import { batchTools, createBatchHandlers } from './batch.js';
 import { boardTools, createBoardHandlers } from './board.js';
 import { extendedTools, createExtendedHandlers } from './extended.js';
+import { futuresTools, createFuturesHandlers } from './futures.js';
+import { optionsTools, createOptionsHandlers } from './options.js';
+import { compoundTools, createCompoundHandlers } from './compound.js';
 
 export type { Tool, ToolHandler } from './types.js';
 
@@ -26,6 +28,9 @@ export function getAllTools(): Tool[] {
     ...batchTools,
     ...boardTools,
     ...extendedTools,
+    ...futuresTools,
+    ...optionsTools,
+    ...compoundTools,
   ];
 }
 
@@ -40,5 +45,8 @@ export function createAllHandlers(sdk: StockSDK): Record<string, ToolHandler> {
     ...createBatchHandlers(sdk),
     ...createBoardHandlers(sdk),
     ...createExtendedHandlers(sdk),
+    ...createFuturesHandlers(sdk),
+    ...createOptionsHandlers(sdk),
+    ...createCompoundHandlers(sdk),
   };
 }

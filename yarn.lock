@@ -1249,10 +1249,8 @@ std-env@^3.10.0:
   resolved "https://registry.yarnpkg.com/std-env/-/std-env-3.10.0.tgz#d810b27e3a073047b2b5e40034881f5ea6f9c83b"
   integrity sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==
 
-stock-sdk@^1.6.2:
-  version "1.6.2"
-  resolved "https://registry.yarnpkg.com/stock-sdk/-/stock-sdk-1.6.2.tgz#7869d8c9142d465f10b3754ff5d8130714917f63"
-  integrity sha512-z+3Z0O98by+vQ02CpvIUi2VfF35Xruz3iwtU+weYpnv/RfP8mZ52jbWawmzLI44aBpeutqVUSlGaGt/rPK+wcA==
+"stock-sdk@file:../stock-sdk":
+  version "1.8.0"
 
 sucrase@^3.35.0:
   version "3.35.1"

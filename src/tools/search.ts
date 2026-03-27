@@ -30,6 +30,7 @@ export const searchTools: Tool[] = [
       },
       required: ['keyword'],
     },
+    annotations: { title: '搜索股票', readOnlyHint: true, openWorldHint: true },
   },
 ];
 

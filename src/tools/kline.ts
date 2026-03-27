@@ -26,6 +26,8 @@ const GetMinuteKlineSchema = z.object({
   symbol: z.string().describe('股票代码，如 "600519" 或 "sh600519"'),
   period: MinutePeriodEnum.optional().describe('分钟周期: 1, 5, 15, 30, 60'),
   adjust: AdjustEnum.optional().describe('复权类型: 空=不复权, qfq=前复权, hfq=后复权'),
+  startDate: z.string().optional().describe('开始日期，格式 YYYYMMDD，如 "20240101"'),
+  endDate: z.string().optional().describe('结束日期，格式 YYYYMMDD，如 "20241231"'),
 });
 
 const GetTodayTimelineSchema = z.object({
@@ -140,31 +142,15 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '股票代码，如 "600519" 或 "sh600519"',
-        },
-        period: {
-          type: 'string',
-          enum: ['daily', 'weekly', 'monthly'],
-          description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线',
-        },
-        adjust: {
-          type: 'string',
-          enum: ['', 'qfq', 'hfq'],
-          description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权',
-        },
-        startDate: {
-          type: 'string',
-          description: '开始日期，格式 YYYYMMDD，如 "20240101"',
-        },
-        endDate: {
-          type: 'string',
-          description: '结束日期，格式 YYYYMMDD，如 "20241231"',
-        },
+        symbol: { type: 'string', description: '股票代码，如 "600519" 或 "sh600519"' },
+        period: { type: 'string', enum: ['daily', 'weekly', 'monthly'], description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线' },
+        adjust: { type: 'string', enum: ['', 'qfq', 'hfq'], description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权' },
+        startDate: { type: 'string', description: '开始日期，格式 YYYYMMDD，如 "20240101"' },
+        endDate: { type: 'string', description: '结束日期，格式 YYYYMMDD，如 "20241231"' },
       },
       required: ['symbol'],
     },
+    annotations: { title: 'A 股历史 K 线', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_hk_history_kline',
@@ -172,31 +158,15 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '港股代码，如 "00700"、"09988"',
-        },
-        period: {
-          type: 'string',
-          enum: ['daily', 'weekly', 'monthly'],
-          description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线',
-        },
-        adjust: {
-          type: 'string',
-          enum: ['', 'qfq', 'hfq'],
-          description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权',
-        },
-        startDate: {
-          type: 'string',
-          description: '开始日期，格式 YYYYMMDD',
-        },
-        endDate: {
-          type: 'string',
-          description: '结束日期，格式 YYYYMMDD',
-        },
+        symbol: { type: 'string', description: '港股代码，如 "00700"、"09988"' },
+        period: { type: 'string', enum: ['daily', 'weekly', 'monthly'], description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线' },
+        adjust: { type: 'string', enum: ['', 'qfq', 'hfq'], description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权' },
+        startDate: { type: 'string', description: '开始日期，格式 YYYYMMDD' },
+        endDate: { type: 'string', description: '结束日期，格式 YYYYMMDD' },
       },
       required: ['symbol'],
     },
+    annotations: { title: '港股历史 K 线', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_us_history_kline',
@@ -204,31 +174,15 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '美股代码，如 "105.AAPL"、"106.BABA"',
-        },
-        period: {
-          type: 'string',
-          enum: ['daily', 'weekly', 'monthly'],
-          description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线',
-        },
-        adjust: {
-          type: 'string',
-          enum: ['', 'qfq', 'hfq'],
-          description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权',
-        },
-        startDate: {
-          type: 'string',
-          description: '开始日期，格式 YYYYMMDD',
-        },
-        endDate: {
-          type: 'string',
-          description: '结束日期，格式 YYYYMMDD',
-        },
+        symbol: { type: 'string', description: '美股代码，如 "105.AAPL"、"106.BABA"' },
+        period: { type: 'string', enum: ['daily', 'weekly', 'monthly'], description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线' },
+        adjust: { type: 'string', enum: ['', 'qfq', 'hfq'], description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权' },
+        startDate: { type: 'string', description: '开始日期，格式 YYYYMMDD' },
+        endDate: { type: 'string', description: '结束日期，格式 YYYYMMDD' },
       },
       required: ['symbol'],
     },
+    annotations: { title: '美股历史 K 线', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_minute_kline',
@@ -236,23 +190,15 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '股票代码，如 "600519" 或 "sh600519"',
-        },
-        period: {
-          type: 'string',
-          enum: ['1', '5', '15', '30', '60'],
-          description: '分钟周期: 1=1分钟, 5=5分钟, 15=15分钟, 30=30分钟, 60=60分钟',
-        },
-        adjust: {
-          type: 'string',
-          enum: ['', 'qfq', 'hfq'],
-          description: '复权类型',
-        },
+        symbol: { type: 'string', description: '股票代码，如 "600519" 或 "sh600519"' },
+        period: { type: 'string', enum: ['1', '5', '15', '30', '60'], description: '分钟周期: 1=1分钟, 5=5分钟, 15=15分钟, 30=30分钟, 60=60分钟' },
+        adjust: { type: 'string', enum: ['', 'qfq', 'hfq'], description: '复权类型' },
+        startDate: { type: 'string', description: '开始日期，格式 YYYYMMDD' },
+        endDate: { type: 'string', description: '结束日期，格式 YYYYMMDD' },
       },
       required: ['symbol'],
     },
+    annotations: { title: 'A 股分钟 K 线', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_today_timeline',
@@ -260,15 +206,12 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        code: {
-          type: 'string',
-          description: '股票代码，如 "sz000001" 或 "sh600000"',
-        },
+        code: { type: 'string', description: '股票代码，如 "sz000001" 或 "sh600000"' },
       },
       required: ['code'],
     },
+    annotations: { title: 'A 股当日分时', readOnlyHint: true, openWorldHint: false },
   },
-  // ==================== 重要：带技术指标的 K 线 ====================
   {
     name: 'get_kline_with_indicators',
     description:
@@ -276,126 +219,31 @@ export const klineTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '股票代码，如 "600519"(A股)、"00700"(港股)、"105.AAPL"(美股)',
-        },
-        market: {
-          type: 'string',
-          enum: ['A', 'HK', 'US'],
-          description: '市场类型: A=A股, HK=港股, US=美股。不传则自动识别',
-        },
-        period: {
-          type: 'string',
-          enum: ['daily', 'weekly', 'monthly'],
-          description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线',
-        },
-        adjust: {
-          type: 'string',
-          enum: ['', 'qfq', 'hfq'],
-          description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权',
-        },
-        startDate: {
-          type: 'string',
-          description: '开始日期，格式 YYYYMMDD',
-        },
-        endDate: {
-          type: 'string',
-          description: '结束日期，格式 YYYYMMDD',
-        },
+        symbol: { type: 'string', description: '股票代码，如 "600519"(A股)、"00700"(港股)、"105.AAPL"(美股)' },
+        market: { type: 'string', enum: ['A', 'HK', 'US'], description: '市场类型: A=A股, HK=港股, US=美股。不传则自动识别' },
+        period: { type: 'string', enum: ['daily', 'weekly', 'monthly'], description: 'K 线周期: daily=日线(默认), weekly=周线, monthly=月线' },
+        adjust: { type: 'string', enum: ['', 'qfq', 'hfq'], description: '复权类型: 空=不复权, qfq=前复权(默认), hfq=后复权' },
+        startDate: { type: 'string', description: '开始日期，格式 YYYYMMDD' },
+        endDate: { type: 'string', description: '结束日期，格式 YYYYMMDD' },
         indicators: {
           type: 'object',
           description: '技术指标配置，可配置 ma/macd/boll/kdj/rsi/wr/bias/cci/atr',
           properties: {
-            ma: {
-              oneOf: [
-                { type: 'boolean' },
-                {
-                  type: 'object',
-                  properties: {
-                    periods: {
-                      type: 'array',
-                      items: { type: 'number' },
-                      description: '均线周期数组，如 [5, 10, 20, 60]',
-                    },
-                    type: {
-                      type: 'string',
-                      enum: ['sma', 'ema', 'wma'],
-                      description: '均线类型',
-                    },
-                  },
-                },
-              ],
-              description: 'MA 均线配置，true 表示使用默认参数 [5,10,20,30,60,120,250]',
-            },
-            macd: {
-              oneOf: [
-                { type: 'boolean' },
-                {
-                  type: 'object',
-                  properties: {
-                    short: { type: 'number', description: '短期 EMA 周期，默认 12' },
-                    long: { type: 'number', description: '长期 EMA 周期，默认 26' },
-                    signal: { type: 'number', description: '信号线周期，默认 9' },
-                  },
-                },
-              ],
-              description: 'MACD 配置',
-            },
-            boll: {
-              oneOf: [
-                { type: 'boolean' },
-                {
-                  type: 'object',
-                  properties: {
-                    period: { type: 'number', description: '周期，默认 20' },
-                    stdDev: { type: 'number', description: '标准差倍数，默认 2' },
-                  },
-                },
-              ],
-              description: '布林带配置',
-            },
-            kdj: {
-              oneOf: [{ type: 'boolean' }, { type: 'object' }],
-              description: 'KDJ 配置',
-            },
-            rsi: {
-              oneOf: [
-                { type: 'boolean' },
-                {
-                  type: 'object',
-                  properties: {
-                    periods: {
-                      type: 'array',
-                      items: { type: 'number' },
-                      description: 'RSI 周期数组，如 [6, 12, 24]',
-                    },
-                  },
-                },
-              ],
-              description: 'RSI 配置',
-            },
-            wr: {
-              oneOf: [{ type: 'boolean' }, { type: 'object' }],
-              description: '威廉指标配置',
-            },
-            bias: {
-              oneOf: [{ type: 'boolean' }, { type: 'object' }],
-              description: '乖离率配置',
-            },
-            cci: {
-              oneOf: [{ type: 'boolean' }, { type: 'object' }],
-              description: 'CCI 配置',
-            },
-            atr: {
-              oneOf: [{ type: 'boolean' }, { type: 'object' }],
-              description: 'ATR 配置',
-            },
+            ma: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { periods: { type: 'array', items: { type: 'number' }, description: '均线周期数组，如 [5, 10, 20, 60]' }, type: { type: 'string', enum: ['sma', 'ema', 'wma'], description: '均线类型' } } }], description: 'MA 均线配置，true 表示使用默认参数 [5,10,20,30,60,120,250]' },
+            macd: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { short: { type: 'number', description: '短期 EMA 周期，默认 12' }, long: { type: 'number', description: '长期 EMA 周期，默认 26' }, signal: { type: 'number', description: '信号线周期，默认 9' } } }], description: 'MACD 配置' },
+            boll: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { period: { type: 'number', description: '周期，默认 20' }, stdDev: { type: 'number', description: '标准差倍数，默认 2' } } }], description: '布林带配置' },
+            kdj: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { period: { type: 'number', description: 'RSV 周期，默认 9' }, kPeriod: { type: 'number', description: 'K 值平滑周期，默认 3' }, dPeriod: { type: 'number', description: 'D 值平滑周期，默认 3' } } }], description: 'KDJ 配置' },
+            rsi: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { periods: { type: 'array', items: { type: 'number' }, description: 'RSI 周期数组，如 [6, 12, 24]' } } }], description: 'RSI 配置' },
+            wr: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { periods: { type: 'array', items: { type: 'number' }, description: 'WR 周期数组，如 [6, 10]' } } }], description: '威廉指标配置' },
+            bias: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { periods: { type: 'array', items: { type: 'number' }, description: 'BIAS 周期数组，如 [6, 12, 24]' } } }], description: '乖离率配置' },
+            cci: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { period: { type: 'number', description: 'CCI 周期，默认 14' } } }], description: 'CCI 配置' },
+            atr: { oneOf: [{ type: 'boolean' }, { type: 'object', properties: { period: { type: 'number', description: 'ATR 周期，默认 14' } } }], description: 'ATR 配置' },
           },
         },
       },
       required: ['symbol'],
     },
+    annotations: { title: 'K 线+技术指标', readOnlyHint: true, openWorldHint: false },
   },
 ];
 
@@ -437,10 +285,12 @@ export function createKlineHandlers(sdk: StockSDK): Record<string, ToolHandler> 
     },
 
     get_minute_kline: async (args) => {
-      const { symbol, period, adjust } = GetMinuteKlineSchema.parse(args);
+      const { symbol, period, adjust, startDate, endDate } = GetMinuteKlineSchema.parse(args);
       return await sdk.getMinuteKline(symbol, {
         period,
         adjust,
+        startDate,
+        endDate,
       });
     },
 

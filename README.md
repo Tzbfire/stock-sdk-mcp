@@ -8,9 +8,9 @@
   <img src="https://img.shields.io/badge/license-ISC-green" alt="license">
 </p>
 
-> 🎯 **为 [OpenClaw](https://github.com/anthropics/clawdbot) 生态研发的股票行情 MCP + Skills 完整解决方案**
+> **为 [OpenClaw](https://github.com/anthropics/clawdbot) 生态研发的股票行情 MCP + Skills 完整解决方案**
 
-基于 [stock-sdk](https://www.npmjs.com/package/stock-sdk) 构建，本项目不仅提供底层的 **MCP (Model Context Protocol) Server**，还内置了一套专业的 **AI Skills (量化技能)**。它能让你的 AI 助手（如 Cursor、Claude、OpenClaw 等）瞬间化身为具备实时数据、技术分析和策略筛选能力的"顶级金融顾问"。
+基于 [stock-sdk](https://www.npmjs.com/package/stock-sdk) 构建，本项目不仅提供底层的 **MCP (Model Context Protocol) Server**，还内置了一套专业的 **AI Skills (量化技能)** 和 **MCP Prompts**。它能让你的 AI 助手（如 Cursor、Claude、OpenClaw 等）瞬间化身为具备实时数据、技术分析和策略筛选能力的"顶级金融顾问"。
 
 支持 **OpenClaw**、**Cursor**、**Claude Desktop**、**Antigravity**、**Gemini/Codex CLI** 等主流 AI 工具。
 
@@ -19,13 +19,19 @@
 
 | 特性 | 描述 |
 |------|------|
-| 🌐 **多市场支持** | A 股（含沪深北、科创/创业板）、港股、美股（纳斯达克/纽交所）、公募基金 |
+| 🌐 **多市场支持** | A 股（含沪深北、科创/创业板）、港股、美股（纳斯达克/纽交所/美交所）、公募基金 |
 | 📊 **实时行情** | 获取最新价、涨跌幅、成交量、五档盘口、市盈率等 40+ 字段 |
 | 📈 **K 线数据** | 日/周/月 K 线，以及 1/5/15/30/60 分钟级别 K 线 |
 | 🧮 **技术指标** | 内置 MA/MACD/BOLL/KDJ/RSI/WR/BIAS/CCI/ATR 等常用指标计算 |
-| 🏷️ **板块数据** | 行业板块、概念板块的行情和成分股查询 |
-| 💰 **扩展功能** | 资金流向、分红详情、交易日历等 |
+| 🏷️ **板块数据** | 行业板块、概念板块的行情、成分股、分钟 K 线 |
+| 📦 **期货数据** | 国内/全球期货行情、K 线、仓单库存、COMEX 库存 |
+| 📋 **期权数据** | 指数/ETF/商品期权报价、K 线、中金所期权、龙虎榜 |
+| 💰 **扩展功能** | 资金流向、分红详情、交易日历、盘口大单 |
 | 🚀 **批量查询** | 全市场行情一次性获取（5000+ A 股、2000+ 港股、8000+ 美股） |
+| 🔮 **复合分析** | 个股全景分析、多股对比、条件选股、大盘概览、板块深度分析 |
+| 💬 **MCP Prompts** | 内置股票分析师、选股器、大盘概览、持仓监控、期货概览等预设 Prompt |
+| 📐 **Resource Templates** | 参数化资源模板，通过 URI 直接读取行情和 K 线数据 |
+| 🏷️ **Tool Annotations** | 所有工具标注了 readOnlyHint、openWorldHint 等语义信息 |
 
 ## 📦 安装方式
 
@@ -173,9 +179,7 @@ curl -X POST http://localhost:8080/v1/tools/call \
 
 ### Antigravity（Gemini Pro in VS Code）
 
-Antigravity 是 Google 推出的 VS Code AI 编程助手，支持 MCP 协议。
-
-配置文件路径：`~/.antigravity/mcp.json`（或在 VS Code 设置中搜索 `antigravity.mcp`）
+配置文件路径：`~/.antigravity/mcp.json`
 
 ```json
 {
@@ -188,18 +192,9 @@ Antigravity 是 Google 推出的 VS Code AI 编程助手，支持 MCP 协议。
 }
 ```
 
-配置后，你可以在 Antigravity 对话框中直接询问：
-
-```
-查询一下腾讯控股今天的股价
-帮我分析茅台最近的 MACD 走势
-```
-
 ---
 
 ### Codex CLI（OpenAI）
-
-[Codex CLI](https://github.com/openai/codex) 是 OpenAI 推出的终端 AI 助手，支持 MCP 工具调用。
 
 配置文件路径：`~/.codex/config.json`
 
@@ -214,18 +209,9 @@ Antigravity 是 Google 推出的 VS Code AI 编程助手，支持 MCP 协议。
 }
 ```
 
-使用示例：
-
-```bash
-codex "查询苹果公司的实时股价"
-codex "分析一下创业板指数最近的技术形态"
-```
-
 ---
 
 ### Gemini CLI（Google）
-
-[Gemini CLI](https://github.com/google/gemini-cli) 是 Google 推出的命令行 AI 助手，支持通过 MCP 扩展能力。
 
 配置文件路径：`~/.gemini/settings.json`
 
@@ -238,13 +224,6 @@ codex "分析一下创业板指数最近的技术形态"
     }
   }
 }
-```
-
-使用示例：
-
-```bash
-gemini "今天 A 股有哪些涨停板概念比较热？"
-gemini "帮我获取腾讯控股的日 K 线并计算均线"
 ```
 
 ---
@@ -282,11 +261,49 @@ gemini "帮我获取腾讯控股的日 K 线并计算均线"
 | `get_industry_list` | 获取行业板块列表 |
 | `get_industry_spot` | 获取行业板块实时行情 |
 | `get_industry_constituents` | 获取行业板块成分股 |
-| `get_industry_kline` | 获取行业板块 K 线 |
+| `get_industry_kline` | 获取行业板块 K 线（支持复权） |
+| `get_industry_minute_kline` | 获取行业板块分钟 K 线/分时 |
 | `get_concept_list` | 获取概念板块列表 |
 | `get_concept_spot` | 获取概念板块实时行情 |
 | `get_concept_constituents` | 获取概念板块成分股 |
-| `get_concept_kline` | 获取概念板块 K 线 |
+| `get_concept_kline` | 获取概念板块 K 线（支持复权） |
+| `get_concept_minute_kline` | 获取概念板块分钟 K 线/分时 |
+
+### 期货数据 🆕
+
+| Tool | 描述 |
+|------|------|
+| `get_futures_kline` | 获取国内期货历史 K 线（含持仓量） |
+| `get_global_futures_spot` | 获取全球期货实时行情（原油、黄金、铜等） |
+| `get_global_futures_kline` | 获取全球期货历史 K 线 |
+| `get_futures_inventory_symbols` | 获取可查库存的期货品种列表 |
+| `get_futures_inventory` | 获取期货仓单/库存数据 |
+| `get_comex_inventory` | 获取 COMEX 黄金/白银库存 |
+
+### 期权数据 🆕
+
+| Tool | 描述 |
+|------|------|
+| `get_index_option_spot` | 获取指数期权 T 型报价（沪深300/中证1000等） |
+| `get_index_option_kline` | 获取指数期权合约日 K 线 |
+| `get_cffex_option_quotes` | 获取中金所期权实时行情列表 |
+| `get_etf_option_months` | 获取 ETF 期权可用合约月份 |
+| `get_etf_option_expire_day` | 获取 ETF 期权到期日信息 |
+| `get_etf_option_minute` | 获取 ETF 期权合约分时数据 |
+| `get_etf_option_daily_kline` | 获取 ETF 期权合约日 K 线 |
+| `get_commodity_option_spot` | 获取商品期权 T 型报价 |
+| `get_commodity_option_kline` | 获取商品期权合约日 K 线 |
+| `get_option_lhb` | 获取期权龙虎榜数据 |
+
+### 复合分析工具 🆕
+
+| Tool | 描述 |
+|------|------|
+| `analyze_stock` | **【复合】** 个股全景分析（行情+K线+指标+资金流+分红） |
+| `compare_stocks` | **【复合】** 多股对比分析（2-10 只股票并排对比） |
+| `scan_market` | **【复合】** 条件选股（涨跌幅/量比/换手率/市盈率等过滤） |
+| `get_market_overview` | **【复合】** 大盘概览（指数+行业TOP10+概念TOP10+涨跌统计） |
+| `get_sector_analysis` | **【复合】** 板块深度分析（行情+K线+龙头股） |
 
 ### 代码列表
 
@@ -314,6 +331,20 @@ gemini "帮我获取腾讯控股的日 K 线并计算均线"
 
 ---
 
+## 💬 MCP Prompts 🆕
+
+内置预设 Prompt，所有支持 MCP 的 AI 客户端均可直接使用：
+
+| Prompt | 描述 | 参数 |
+|--------|------|------|
+| `stock-analyst` | 个股技术分析专家 | `symbol`(必填), `period` |
+| `stock-screener` | 智能选股器 | `conditions`(必填), `market` |
+| `market-overview` | 大盘全景概览 | `scope` |
+| `realtime-monitor` | 自选股实时监控 | `stocks`(必填), `costs` |
+| `futures-overview` | 期货市场概览 | `scope` |
+
+---
+
 ## 🧠 AI Skills (技能)
 
 Skills 是一组预定义的"场景化指令"，将多个 MCP Tools 组合成专业的工作流。本项目专为 **OpenClaw** 提供了开箱即用的技能支持。
@@ -337,6 +368,8 @@ Skills 是一组预定义的"场景化指令"，将多个 MCP Tools 组合成专
 
 ## 📚 可用 Resources
 
+### 静态资源
+
 MCP Resources 是静态数据资源，可供 AI 主动读取：
 
 | URI | 描述 |
@@ -348,6 +381,17 @@ MCP Resources 是静态数据资源，可供 AI 主动读取：
 | `stock://market/fund/codes` | 基金代码列表 |
 | `stock://board/industry/list` | 行业板块列表 |
 | `stock://board/concept/list` | 概念板块列表 |
+
+### Resource Templates 🆕
+
+参数化资源模板，通过 URI 直接读取动态数据：
+
+| URI Template | 描述 | 示例 |
+|-------------|------|------|
+| `stock://quotes/{code}` | 个股实时行情 | `stock://quotes/sh600519` |
+| `stock://kline/{code}/{period}` | 个股 K 线数据 | `stock://kline/600519/daily` |
+| `stock://board/industry/{code}` | 行业板块详情 | `stock://board/industry/BK1027` |
+| `stock://board/concept/{code}` | 概念板块详情 | `stock://board/concept/BK0800` |
 
 ---
 
@@ -365,6 +409,12 @@ MCP Resources 是静态数据资源，可供 AI 主动读取：
 获取全市场科创板股票的实时行情，按涨幅排序
 
 苹果公司最近的 RSI 指标是多少？是否超买？
+
+帮我看看螺纹钢主力合约最近的走势
+
+全球黄金期货现在什么价位？COMEX 库存最近变化如何？
+
+帮我用 scan_market 找出今天换手率大于 10% 且涨幅大于 5% 的股票
 ```
 
 ---

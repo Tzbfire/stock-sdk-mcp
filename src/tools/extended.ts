@@ -26,14 +26,11 @@ export const extendedTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        codes: {
-          type: 'array',
-          items: { type: 'string' },
-          description: '股票代码数组，如 ["sz000858", "sh600519"]',
-        },
+        codes: { type: 'array', items: { type: 'string' }, description: '股票代码数组，如 ["sz000858", "sh600519"]' },
       },
       required: ['codes'],
     },
+    annotations: { title: '资金流向', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_panel_large_order',
@@ -41,37 +38,29 @@ export const extendedTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        codes: {
-          type: 'array',
-          items: { type: 'string' },
-          description: '股票代码数组，如 ["sz000858", "sh600519"]',
-        },
+        codes: { type: 'array', items: { type: 'string' }, description: '股票代码数组，如 ["sz000858", "sh600519"]' },
       },
       required: ['codes'],
     },
+    annotations: { title: '盘口大单', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_trading_calendar',
     description: '获取 A 股交易日历，返回从 1990 年至今的所有交易日期列表',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-    },
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { title: '交易日历', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_dividend_detail',
-    description:
-      '获取股票分红派送详情，包含现金分红、送转股份、除权日、派息日等 20+ 维度信息',
+    description: '获取股票分红派送详情，包含现金分红、送转股份、除权日、派息日等 20+ 维度信息',
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: {
-          type: 'string',
-          description: '股票代码，如 "600519" 或 "sh600519"',
-        },
+        symbol: { type: 'string', description: '股票代码，如 "600519" 或 "sh600519"' },
       },
       required: ['symbol'],
     },
+    annotations: { title: '分红详情', readOnlyHint: true, openWorldHint: false },
   },
 ];
 

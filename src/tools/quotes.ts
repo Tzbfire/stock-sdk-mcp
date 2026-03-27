@@ -69,9 +69,9 @@ const GetAllHKQuotesSchema = z.object({
 
 const GetAllUSQuotesSchema = z.object({
   market: z
-    .enum(['all', 'NASDAQ', 'NYSE'])
+    .enum(['all', 'NASDAQ', 'NYSE', 'AMEX'])
     .optional()
-    .describe('市场筛选: all=全部, NASDAQ=纳斯达克, NYSE=纽交所'),
+    .describe('市场筛选: all=全部, NASDAQ=纳斯达克, NYSE=纽交所, AMEX=美交所'),
   batchSize: z
     .number()
     .optional()
@@ -102,6 +102,7 @@ export const quoteTools: Tool[] = [
       },
       required: ['codes'],
     },
+    annotations: { title: 'A 股实时行情', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_hk_quotes',
@@ -117,6 +118,7 @@ export const quoteTools: Tool[] = [
       },
       required: ['codes'],
     },
+    annotations: { title: '港股实时行情', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_us_quotes',
@@ -132,6 +134,7 @@ export const quoteTools: Tool[] = [
       },
       required: ['codes'],
     },
+    annotations: { title: '美股实时行情', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_fund_quotes',
@@ -147,6 +150,7 @@ export const quoteTools: Tool[] = [
       },
       required: ['codes'],
     },
+    annotations: { title: '基金实时行情', readOnlyHint: true, openWorldHint: false },
   },
   {
     name: 'get_quotes_by_query',
@@ -163,8 +167,8 @@ export const quoteTools: Tool[] = [
       },
       required: ['queries'],
     },
+    annotations: { title: '通用行情查询', readOnlyHint: true, openWorldHint: true },
   },
-  // ==================== 重要：全市场行情 ====================
   {
     name: 'get_all_a_share_quotes',
     description:
@@ -188,6 +192,7 @@ export const quoteTools: Tool[] = [
         },
       },
     },
+    annotations: { title: '全市场 A 股行情', readOnlyHint: true, openWorldHint: true },
   },
   {
     name: 'get_all_hk_quotes',
@@ -206,18 +211,19 @@ export const quoteTools: Tool[] = [
         },
       },
     },
+    annotations: { title: '全市场港股行情', readOnlyHint: true, openWorldHint: true },
   },
   {
     name: 'get_all_us_quotes',
     description:
-      '【重要】获取全市场美股实时行情（8000+ 只股票），支持按市场筛选（纳斯达克/纽交所），内置并发控制。注意：数据量较大，请谨慎使用',
+      '【重要】获取全市场美股实时行情（8000+ 只股票），支持按市场筛选（纳斯达克/纽交所/美交所），内置并发控制。注意：数据量较大，请谨慎使用',
     inputSchema: {
       type: 'object',
       properties: {
         market: {
           type: 'string',
-          enum: ['all', 'NASDAQ', 'NYSE'],
-          description: '市场筛选: all=全部(默认), NASDAQ=纳斯达克, NYSE=纽交所',
+          enum: ['all', 'NASDAQ', 'NYSE', 'AMEX'],
+          description: '市场筛选: all=全部(默认), NASDAQ=纳斯达克, NYSE=纽交所, AMEX=美交所',
         },
         batchSize: {
           type: 'number',
@@ -229,6 +235,7 @@ export const quoteTools: Tool[] = [
         },
       },
     },
+    annotations: { title: '全市场美股行情', readOnlyHint: true, openWorldHint: true },
   },
 ];
 
@@ -351,7 +358,7 @@ export function createQuoteHandlers(sdk: StockSDK): Record<string, ToolHandler> 
         concurrency: concurrency ?? 5,
       };
       if (market && market !== 'all') {
-        options.market = market as 'NASDAQ' | 'NYSE';
+        options.market = market as 'NASDAQ' | 'NYSE' | 'AMEX';
       }
       const quotes = await sdk.getAllUSShareQuotes(options);
       return {
