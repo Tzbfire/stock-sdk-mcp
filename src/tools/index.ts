@@ -14,6 +14,11 @@ import { extendedTools, createExtendedHandlers } from './extended.js';
 import { futuresTools, createFuturesHandlers } from './futures.js';
 import { optionsTools, createOptionsHandlers } from './options.js';
 import { compoundTools, createCompoundHandlers } from './compound.js';
+import { fundflowTools, createFundflowHandlers } from './fundflow.js';
+import { northboundTools, createNorthboundHandlers } from './northbound.js';
+import { hotspotTools, createHotspotHandlers } from './hotspot.js';
+import { dragontigerTools, createDragontigerHandlers } from './dragontiger.js';
+import { marginTools, createMarginHandlers } from './margin.js';
 
 export type { Tool, ToolHandler } from './types.js';
 
@@ -31,6 +36,11 @@ export function getAllTools(): Tool[] {
     ...futuresTools,
     ...optionsTools,
     ...compoundTools,
+    ...fundflowTools,
+    ...northboundTools,
+    ...hotspotTools,
+    ...dragontigerTools,
+    ...marginTools,
   ];
 }
 
@@ -48,5 +58,10 @@ export function createAllHandlers(sdk: StockSDK): Record<string, ToolHandler> {
     ...createFuturesHandlers(sdk),
     ...createOptionsHandlers(sdk),
     ...createCompoundHandlers(sdk),
+    ...createFundflowHandlers(sdk),
+    ...createNorthboundHandlers(sdk),
+    ...createHotspotHandlers(sdk),
+    ...createDragontigerHandlers(sdk),
+    ...createMarginHandlers(sdk),
   };
 }

@@ -1,6 +1,6 @@
 ---
 name: stock-analyst
-description: 股票技术分析专家 - 提供专业的 K 线形态和技术指标分析，给出投资建议
+description: 股票技术分析专家 - 提供专业的 K 线形态、技术指标、资金流向与北向持仓分析
 version: "1.0"
 author: chengzuopeng
 tags:
@@ -40,41 +40,29 @@ requires:
 
 当用户请求分析某只股票时，按照以下步骤执行：
 
-### 步骤 1: 获取实时行情
+### 步骤 1: 获取全景数据
 
-使用 `get_quotes_by_query` 工具查询股票的实时行情，了解当前价格、涨跌幅、成交量等基本信息。
-
-```json
-{
-  "tool": "get_quotes_by_query",
-  "arguments": {
-    "queries": ["用户提到的股票名称或代码"]
-  }
-}
-```
-
-### 步骤 2: 获取带技术指标的 K 线数据
-
-使用 `get_kline_with_indicators` 工具获取近期 K 线和多种技术指标。
+使用 `analyze_stock` 复合工具一次性获取 K 线指标、资金流、资金流历史、北向持仓和分红数据。
 
 ```json
 {
-  "tool": "get_kline_with_indicators",
+  "tool": "analyze_stock",
   "arguments": {
     "symbol": "股票代码",
-    "period": "daily",
-    "indicators": {
-      "ma": { "periods": [5, 10, 20, 60] },
-      "macd": true,
-      "kdj": true,
-      "rsi": { "periods": [6, 12, 24] },
-      "boll": true
-    }
+    "period": "daily"
   }
 }
 ```
 
-### 步骤 3: 分析技术形态
+返回数据包含：
+- `kline`：近 60 日带指标 K 线（MA/MACD/KDJ/RSI/BOLL）
+- `fundFlow`：当日资金流向（主力/散户）
+- `fundFlowHistory`：近期资金流历史趋势
+- `northboundHolding`：北向持仓变化历史
+- `dividends`：近期分红记录
+- `dataStatus`：各数据源状态（检查是否有数据获取失败）
+
+### 步骤 2: 分析技术形态
 
 基于获取的数据，分析以下内容：
 
@@ -104,7 +92,20 @@ requires:
    - 近期的高点和低点
    - 均线可能提供的支撑或压力
 
-### 步骤 4: 输出分析报告
+### 步骤 4: 资金面分析
+
+基于 `fundFlowHistory` 和 `northboundHolding` 数据，分析：
+
+1. **主力资金趋势**：
+   - 近期主力净流入是持续流入还是流出？
+   - 超大单/大单占比变化趋势
+   - 与股价走势是否一致（资金先行还是滞后）
+
+2. **北向资金态度**（如有数据）：
+   - 外资持仓是在增加还是减少？
+   - 增减幅度是否显著？
+
+### 步骤 5: 输出分析报告
 
 以结构化的方式输出分析报告：
 

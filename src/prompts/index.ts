@@ -34,7 +34,7 @@ export function getAllPrompts(): Prompt[] {
   return [
     {
       name: 'stock-analyst',
-      description: '个股技术分析专家：深度分析 K 线形态与技术指标，给出买卖建议',
+      description: '个股技术分析专家：深度分析 K 线形态、技术指标、资金流向与北向持仓，给出综合建议',
       arguments: [
         { name: 'symbol', description: '股票名称或代码，如 "茅台"、"600519"、"AAPL"', required: true },
         { name: 'period', description: 'K 线周期: daily/weekly/monthly，默认 daily', required: false },
@@ -61,6 +61,13 @@ export function getAllPrompts(): Prompt[] {
       arguments: [
         { name: 'stocks', description: '自选股列表，用逗号分隔，如 "茅台,腾讯,苹果"', required: true },
         { name: 'costs', description: '对应的买入成本，用逗号分隔，如 "1800,350,180"', required: false },
+      ],
+    },
+    {
+      name: 'smart-money-tracker',
+      description: '聪明钱追踪师：综合北向资金、龙虎榜机构、大宗交易、资金流排名，追踪主力资金动向',
+      arguments: [
+        { name: 'focus', description: '关注重点: all=全面扫描(默认), northbound=北向资金, institution=机构动向, block_trade=大宗交易', required: false },
       ],
     },
     {
@@ -92,21 +99,18 @@ export function createPromptHandlers(): Record<string, PromptHandler> {
 
 请按以下步骤操作：
 
-1. **获取实时行情**：使用 get_quotes_by_query 工具查询 "${symbol}" 的实时行情
-2. **获取 K 线与指标**：使用 get_kline_with_indicators 工具获取 ${period} K 线，启用以下指标：
-   - MA（5, 10, 20, 60 日均线）
-   - MACD
-   - KDJ
-   - RSI
-   - BOLL（布林带）
-3. **技术分析**：基于获取到的数据，分析：
+1. **全景数据获取**：使用 analyze_stock 工具获取 "${symbol}" 的全景数据（K 线指标 + 资金流 + 资金流历史 + 北向持仓 + 分红），周期为 ${period}
+2. **技术分析**：基于 K 线和指标数据，分析：
    - 趋势判断：均线排列方向，价格与均线的关系
    - MACD 信号：金叉/死叉，柱状图变化趋势
    - KDJ 信号：超买/超卖区域，交叉信号
    - RSI 信号：是否处于超买(>70)/超卖(<30)区域
    - 布林带：价格在通道中的位置，带宽变化
    - 支撑位与压力位
-4. **综合研判**：给出综合分析结论和操作建议
+3. **资金面分析**：
+   - 主力资金流入/流出趋势（近期是否持续流入）
+   - 北向资金持仓变化（外资是否在加仓）
+4. **综合研判**：结合技术面和资金面，给出综合分析结论和操作建议
 
 请以 Markdown 表格和清晰的结构化格式输出分析结果。
 ⚠️ 免责声明：以上分析仅供参考，不构成投资建议。`,
@@ -163,12 +167,13 @@ export function createPromptHandlers(): Record<string, PromptHandler> {
 
 请按以下步骤操作：
 
-1. **获取大盘数据**：使用 get_market_overview 工具获取大盘概览数据
+1. **获取大盘数据**：使用 get_market_overview 工具获取大盘概览（已包含指数、行业/概念 TOP10、北向资金、涨停/跌停家数、板块异动）
 2. **指数解读**：分析上证指数、深证成指、创业板指等主要指数的表现
-3. **行业热点**：分析领涨和领跌的行业板块
-4. **概念热点**：分析当前活跃的概念板块
-5. **市场情绪**：根据涨跌家数、板块涨跌分布判断市场情绪
-${scope === 'detailed' ? '6. **详细分析**：对领涨行业的龙头股使用 get_sector_analysis 做深度分析' : ''}
+3. **北向资金**：解读北向资金流入/流出情况及其信号意义
+4. **行业热点**：分析领涨和领跌的行业板块
+5. **概念热点**：分析当前活跃的概念板块
+6. **市场温度**：综合涨停/跌停家数、板块异动、北向资金判断市场情绪
+${scope === 'detailed' ? '7. **详细分析**：对领涨行业的龙头股使用 get_sector_analysis 做深度分析' : ''}
 
 请以清晰的结构化格式输出，适合快速阅读。`,
             },
@@ -200,6 +205,56 @@ ${costs ? '3. **损益计算**：根据买入成本计算每只股票的浮动�
 ${costs ? '4. **持仓总结**：汇总持仓整体盈亏情况' : '3. **异动提示**：标注涨跌幅超过 3% 的异动股票'}
 
 请以清晰的表格格式输出。`,
+            },
+          },
+        ],
+      };
+    },
+
+    'smart-money-tracker': (args) => {
+      const focus = args.focus || 'all';
+      const sections = {
+        northbound: focus === 'all' || focus === 'northbound',
+        institution: focus === 'all' || focus === 'institution',
+        blockTrade: focus === 'all' || focus === 'block_trade',
+      };
+      return {
+        description: '聪明钱动向追踪',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `你是一位专注于资金流分析的投资研究员。请追踪当前市场中"聪明钱"（北向资金、机构、游资）的最新动向。
+
+请按以下步骤操作：
+${sections.northbound ? `
+**一、北向资金动向**
+1. 使用 get_northbound_realtime 获取今日北向资金分时和汇总
+2. 使用 get_northbound_holding_rank 获取北向持股变动排行（5日维度）
+3. 分析：北向今日净流入/流出多少？重点加仓了哪些个股？` : ''}
+${sections.institution ? `
+**${sections.northbound ? '二' : '一'}、龙虎榜机构动向**
+1. 使用 get_dragon_tiger_stats(type: "institution") 获取近期机构买卖统计（需提供近 5 个交易日的日期范围）
+2. 使用 get_dragon_tiger_stats(type: "stock_stats") 获取个股上榜频次统计
+3. 分析：机构近期在集中买入哪些标的？是否有一致性方向？` : ''}
+${sections.blockTrade ? `
+**${sections.northbound && sections.institution ? '三' : sections.northbound || sections.institution ? '二' : '一'}、大宗交易与融资融券**
+1. 使用 get_block_trade(type: "overview") 获取大宗交易市场总览
+2. 使用 get_margin_data(type: "account") 获取融资融券账户统计
+3. 分析：大宗交易溢价/折价趋势、两融余额变化（市场杠杆情绪）` : ''}
+
+**${focus === 'all' ? '四' : '二'}、资金流向验证**
+1. 使用 get_fund_flow_rank(scope: "stock") 获取个股主力资金流排名
+2. 使用 get_fund_flow_rank(scope: "sector", sectorType: "industry") 获取行业资金流排名
+3. 使用 get_market_fund_flow 获取大盘资金流趋势
+
+**最终研判**
+- 交叉验证：北向、机构、游资方向是否共振
+- 输出：聪明钱一致看好/看空的板块和个股
+- 给出关注建议和风险提示
+
+⚠️ 免责声明：以上分析仅供参考，不构成投资建议。`,
             },
           },
         ],

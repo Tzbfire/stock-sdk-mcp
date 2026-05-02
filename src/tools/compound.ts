@@ -53,7 +53,7 @@ export const compoundTools: Tool[] = [
   {
     name: 'analyze_stock',
     description:
-      '【复合】个股全景分析：一次性返回实时行情、近 60 日带指标 K 线（MA/MACD/KDJ/RSI/BOLL）、资金流向、分红记录，适合快速全面了解一只股票',
+      '【复合】个股全景分析：一次性返回带指标 K 线（MA/MACD/KDJ/RSI/BOLL）、资金流向、资金流历史趋势、北向持仓历史、分红记录，适合快速全面了解一只股票',
     inputSchema: {
       type: 'object',
       properties: {
@@ -104,7 +104,7 @@ export const compoundTools: Tool[] = [
   {
     name: 'get_market_overview',
     description:
-      '【复合】大盘概览：一次性返回主要指数行情、行业板块涨幅 TOP10、概念板块涨幅 TOP10、涨跌家数统计',
+      '【复合】大盘概览：一次性返回主要指数行情、行业/概念板块 TOP10、涨跌家数统计、北向资金、涨停/跌停家数、板块异动',
     inputSchema: {
       type: 'object',
       properties: {
@@ -153,28 +153,45 @@ export function createCompoundHandlers(sdk: StockSDK): Record<string, ToolHandle
       });
 
       const isAShare = market === 'A' || /^(sh|sz|bj)/i.test(symbol) || /^\d{6}$/.test(symbol);
-      const fundFlowPromise = isAShare
-        ? sdk.getFundFlow([symbol]).catch(() => [])
-        : Promise.resolve([]);
-      const dividendPromise = isAShare
-        ? sdk.getDividendDetail(symbol).catch(() => [])
-        : Promise.resolve([]);
 
-      const [klines, fundFlow, dividends] = await Promise.all([
+      const results = await Promise.allSettled([
         klinePromise,
-        fundFlowPromise,
-        dividendPromise,
+        isAShare ? sdk.getFundFlow([symbol]) : Promise.resolve([]),
+        isAShare ? sdk.getDividendDetail(symbol) : Promise.resolve([]),
+        isAShare ? sdk.getIndividualFundFlow(symbol, { period: 'daily' }) : Promise.resolve([]),
+        isAShare ? sdk.getNorthboundIndividual(symbol).catch(() => []) : Promise.resolve([]),
       ]);
+
+      const klines = results[0].status === 'fulfilled' ? results[0].value : [];
+      const fundFlow = results[1].status === 'fulfilled' ? results[1].value : [];
+      const dividends = results[2].status === 'fulfilled' ? results[2].value : [];
+      const fundFlowHistory = results[3].status === 'fulfilled' ? results[3].value : [];
+      const northboundHolding = results[4].status === 'fulfilled' ? results[4].value : [];
 
       const latest = klines.length > 0 ? klines[klines.length - 1] : null;
 
       return {
+        dataStatus: {
+          kline: results[0].status,
+          fundFlow: results[1].status,
+          dividends: results[2].status,
+          fundFlowHistory: results[3].status,
+          northboundHolding: results[4].status,
+        },
         kline: {
           total: klines.length,
           latest,
           data: klines.slice(-60),
         },
         fundFlow: fundFlow.length > 0 ? fundFlow[0] : null,
+        fundFlowHistory: {
+          total: fundFlowHistory.length,
+          recent: fundFlowHistory.slice(-20),
+        },
+        northboundHolding: {
+          total: northboundHolding.length,
+          recent: northboundHolding.slice(-20),
+        },
         dividends: {
           total: dividends.length,
           recent: dividends.slice(0, 5),
@@ -267,12 +284,25 @@ export function createCompoundHandlers(sdk: StockSDK): Record<string, ToolHandle
       const indexCodes = ['sh000001', 'sz399001', 'sz399006', 'sh000688', 'sh000300'];
       const hkIndexCodes = ['hkHSI', 'hkHSCEI', 'hkHSTECH'];
 
-      const [indices, industryList, conceptList, hkIndices] = await Promise.all([
+      const results = await Promise.allSettled([
         sdk.getFullQuotes(indexCodes),
         sdk.getIndustryList(),
         sdk.getConceptList(),
-        includeHK ? sdk.getHKQuotes(hkIndexCodes).catch(() => []) : Promise.resolve([]),
+        includeHK ? sdk.getHKQuotes(hkIndexCodes) : Promise.resolve([]),
+        sdk.getNorthboundFlowSummary(),
+        sdk.getZTPool('zt'),
+        sdk.getZTPool('dt'),
+        sdk.getBoardChanges(),
       ]);
+
+      const indices = results[0].status === 'fulfilled' ? results[0].value : [];
+      const industryList = results[1].status === 'fulfilled' ? results[1].value : [];
+      const conceptList = results[2].status === 'fulfilled' ? results[2].value : [];
+      const hkIndices = results[3].status === 'fulfilled' ? results[3].value : [];
+      const northboundSummary = results[4].status === 'fulfilled' ? results[4].value : [];
+      const ztPool = results[5].status === 'fulfilled' ? results[5].value : [];
+      const dtPool = results[6].status === 'fulfilled' ? results[6].value : [];
+      const boardChanges = results[7].status === 'fulfilled' ? results[7].value : [];
 
       const sortedIndustry = [...industryList]
         .sort((a, b) => (b.changePercent ?? 0) - (a.changePercent ?? 0));
@@ -283,6 +313,16 @@ export function createCompoundHandlers(sdk: StockSDK): Record<string, ToolHandle
       const fallCount = industryList.filter((b) => (b.changePercent ?? 0) < 0).length;
 
       return {
+        dataStatus: {
+          indices: results[0].status,
+          industry: results[1].status,
+          concept: results[2].status,
+          hkIndices: results[3].status,
+          northbound: results[4].status,
+          ztPool: results[5].status,
+          dtPool: results[6].status,
+          boardChanges: results[7].status,
+        },
         indices: [...indices, ...(includeHK ? hkIndices : [])],
         industryTop10: sortedIndustry.slice(0, 10).map((b) => ({
           name: b.name, code: b.code, changePercent: b.changePercent,
@@ -300,6 +340,10 @@ export function createCompoundHandlers(sdk: StockSDK): Record<string, ToolHandle
           industryFall: fallCount,
           industryFlat: industryList.length - riseCount - fallCount,
         },
+        northbound: northboundSummary.length > 0 ? northboundSummary : null,
+        ztCount: ztPool.length,
+        dtCount: dtPool.length,
+        boardChanges: boardChanges.slice(0, 10),
       };
     },
 

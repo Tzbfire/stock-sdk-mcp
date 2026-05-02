@@ -38,59 +38,44 @@ requires:
 
 ## 执行步骤
 
-### 步骤 1: 获取主要指数
+### 步骤 1: 获取大盘全景数据
 
-使用 `get_a_share_quotes` 获取主要指数：
-
-```json
-{
-  "tool": "get_a_share_quotes",
-  "arguments": {
-    "codes": [
-      "sh000001",  // 上证指数
-      "sz399001",  // 深证成指
-      "sz399006",  // 创业板指
-      "sh000688",  // 科创50
-      "sh000300",  // 沪深300
-      "sh000016"   // 上证50
-    ]
-  }
-}
-```
-
-港股/美股指数：
-```json
-{
-  "tool": "get_hk_quotes",
-  "arguments": {
-    "codes": ["HSI", "HSCEI"]  // 恒生指数、国企指数
-  }
-}
-```
-
-### 步骤 2: 获取行业板块行情
-
-使用 `get_industry_spot` 获取行业板块涨跌排名：
+使用 `get_market_overview` 一次性获取指数、行业/概念 TOP10、北向资金、涨停/跌停家数、板块异动等全景数据：
 
 ```json
 {
-  "tool": "get_industry_spot",
+  "tool": "get_market_overview",
   "arguments": {}
 }
 ```
 
-### 步骤 3: 获取概念板块行情
+如需港股指数：
+```json
+{
+  "tool": "get_market_overview",
+  "arguments": { "includeHK": true }
+}
+```
 
-使用 `get_concept_spot` 获取热点概念：
+### 步骤 2: 补充行业/概念完整数据（可选，详细模式时使用）
+
+如需完整列表（不仅 TOP10），使用：
 
 ```json
 {
-  "tool": "get_concept_spot",
+  "tool": "get_industry_list",
   "arguments": {}
 }
 ```
 
-### 步骤 4: 综合分析输出报告
+```json
+{
+  "tool": "get_concept_list",
+  "arguments": {}
+}
+```
+
+### 步骤 3: 综合分析输出报告
 
 ```markdown
 ## 📊 市场概览 (YYYY-MM-DD)
@@ -106,9 +91,9 @@ requires:
 
 ### 📊 市场情绪
 
-- 上涨家数：XXXX 只
-- 下跌家数：XXXX 只
 - 涨停：XX 只 / 跌停：XX 只
+- 北向资金：净流入/流出 XX 亿
+- 板块异动：[今日异动板块摘要]
 - 情绪评估：[偏强/中性/偏弱]
 
 ### 🔥 热点行业 TOP 5
