@@ -64,19 +64,23 @@ describe('Data source fixes', () => {
           }),
         } as any;
       }
-      if (url.includes('api/qt/kamt/get')) {
+      if (url.includes('TQLEX?Entry=HQServ.hq_nlp')) {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              s2nDate: '20260521',
-              hk2sh: { netBuyAmt: 12.34 },
-              hk2sz: { netBuyAmt: 56.78 },
-            },
+            ResultSets: [{ Content: [[
+              '1997',
+              [12.34, 12.35],
+              [56.78, 56.79],
+              [0, 0],
+              [0, 0],
+              [],
+              []
+            ]] }],
           }),
         } as any;
       }
-      return {
+            return {
         ok: true,
         json: async () => ({
           result: {
@@ -107,24 +111,18 @@ describe('Data source fixes', () => {
     const result = await handlers.get_northbound_realtime({ direction: 'north' }) as any;
 
     expect(result.source).toBe('eastmoney_kamtbs_rtmin+datacenter_mutual_quota');
-    expect(result.warning).toMatch(/replaced minute data with current northbound snapshot/i);
+    expect(result.warning).toMatch(/replaced northbound minute data with TDX mod_hsgt minute source/i);
     expect(result.minute.data[0]).toMatchObject({
-      time: 'snapshot',
       shanghaiNetInflow: 12.34,
       shenzhenNetInflow: 56.78,
       totalNetInflow: 69.12,
     });
-    expect(result.snapshot ?? {
-      shanghaiNetBuyAmount: result.minute.data[0].shanghaiNetInflow,
-      shenzhenNetBuyAmount: result.minute.data[0].shenzhenNetInflow,
-      totalNetBuyAmount: result.minute.data[0].totalNetInflow,
-      source: 'eastmoney_kamt_snapshot',
-    }).toMatchObject({
-      shanghaiNetBuyAmount: 12.34,
-      shenzhenNetBuyAmount: 56.78,
-      totalNetBuyAmount: 69.12,
-      source: 'eastmoney_kamt_snapshot',
+    expect(result.minute.data[1]).toMatchObject({
+      shanghaiNetInflow: 12.35,
+      shenzhenNetInflow: 56.79,
+      totalNetInflow: 69.14,
     });
+    expect(result.snapshot).toBeUndefined();
     expect(result.summary.data[0]).toMatchObject({
       boardName: '沪股通',
       direction: '北向',

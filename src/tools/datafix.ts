@@ -19,6 +19,7 @@ const EASTMONEY_FFLOW_DAYKLINE = 'https://push2his.eastmoney.com/api/qt/stock/ff
 const EASTMONEY_HSGT_RTMIN = 'https://push2.eastmoney.com/api/qt/kamtbs.rtmin/get';
 const EASTMONEY_HSGT_SNAPSHOT = 'https://push2.eastmoney.com/api/qt/kamt/get';
 const EASTMONEY_DATACENTER = 'https://datacenter-web.eastmoney.com/api/data/v1/get';
+const TDX_HSGT_TQLEX = 'http://calc.tdx.com.cn:7616/TQLEX?Entry=HQServ.hq_nlp';
 const FUND_FLOW_FIELDS = 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65';
 
 export type FundFlowSnapshot = {
@@ -76,11 +77,13 @@ function secidOf(code: string): string {
   return code.includes('.') ? code : c;
 }
 
-async function fetchJson(url: string): Promise<any> {
+async function fetchJson(url: string, init?: RequestInit): Promise<any> {
   const res = await fetch(url, {
+    ...init,
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       Referer: 'https://data.eastmoney.com/',
+      ...(init?.headers ?? {}),
     },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
@@ -147,6 +150,46 @@ function parseHsgtMinute(line: string, date: string): HsgtMinutePoint {
 function parseHsgtDate(raw: string): string {
   if (!raw) return raw;
   return /^\d{8}$/.test(raw) ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}` : raw;
+}
+
+function inferMinuteTime(index: number, direction: 'north' | 'south'): string {
+  const startMinute = direction === 'north' ? (9 * 60 + 25) : (9 * 60 + 20);
+  const total = startMinute + index;
+  const hh = String(Math.floor(total / 60)).padStart(2, '0');
+  const mm = String(total % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+async function getTdxHsgtMinute(reqId: '1997' | '2000', direction: 'north' | 'south'): Promise<HsgtMinutePoint[]> {
+  const body = JSON.stringify([{ ReqId: reqId, DataTime: '090000', modname: 'mod_hsgt.dll' }]);
+  const json = await fetchJson(TDX_HSGT_TQLEX, {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      Referer: 'http://chaguwang.cn/',
+    },
+  });
+  const content = json?.ResultSets?.[0]?.Content?.[0];
+  if (!Array.isArray(content) || content.length < 5) return [];
+
+  const shArr = direction === 'north' ? content[1] : content[3];
+  const szArr = direction === 'north' ? content[2] : content[4];
+  const timeArr = direction === 'north' ? content[5] : content[6];
+  if (!Array.isArray(shArr) || !Array.isArray(szArr)) return [];
+
+  const points: HsgtMinutePoint[] = [];
+  for (let i = 0; i < Math.min(shArr.length, szArr.length); i += 1) {
+    const t = Array.isArray(timeArr) && timeArr[i] ? String(timeArr[i]) : inferMinuteTime(i, direction);
+    points.push({
+      date: '',
+      time: t,
+      shanghaiNetInflow: num(shArr[i]),
+      shenzhenNetInflow: num(szArr[i]),
+      totalNetInflow: num((Number(shArr[i] ?? 0) + Number(szArr[i] ?? 0))),
+    });
+  }
+  return points;
 }
 
 async function getEastmoneyNorthboundSnapshot(): Promise<HsgtSnapshotPoint | null> {
@@ -239,18 +282,25 @@ export async function getEastmoneyHsgtRealtime(direction: 'north' | 'south') {
   let snapshot: HsgtSnapshotPoint | null = null;
 
   if (direction === 'north' && allZero(minute)) {
-    snapshot = await getEastmoneyNorthboundSnapshot();
-    if (snapshot && snapshot.totalNetBuyAmount !== null) {
-      minute = [{
-        date: snapshot.date,
-        time: 'snapshot',
-        shanghaiNetInflow: snapshot.shanghaiNetBuyAmount,
-        shenzhenNetInflow: snapshot.shenzhenNetBuyAmount,
-        totalNetInflow: snapshot.totalNetBuyAmount,
-      }];
-      warning = 'Eastmoney s2n minute series is all zero; replaced minute data with current northbound snapshot from kamt/get.';
+    const tdxMinute = await getTdxHsgtMinute('1997', 'north').catch(() => []);
+    if (tdxMinute.length > 0 && !allZero(tdxMinute)) {
+      const dateNormalized = parseHsgtDate(date);
+      minute = tdxMinute.map((p) => ({ ...p, date: dateNormalized || p.date }));
+      warning = 'Eastmoney s2n minute series is all zero; replaced northbound minute data with TDX mod_hsgt minute source.';
     } else {
-      warning = 'Eastmoney realtime s2n minute series is all zero; use summary/history source for northbound conclusions.';
+      snapshot = await getEastmoneyNorthboundSnapshot();
+      if (snapshot && snapshot.totalNetBuyAmount !== null) {
+        minute = [{
+          date: snapshot.date,
+          time: 'snapshot',
+          shanghaiNetInflow: snapshot.shanghaiNetBuyAmount,
+          shenzhenNetInflow: snapshot.shenzhenNetBuyAmount,
+          totalNetInflow: snapshot.totalNetBuyAmount,
+        }];
+        warning = 'Eastmoney s2n minute series is all zero; replaced minute data with current northbound snapshot from kamt/get.';
+      } else {
+        warning = 'Eastmoney realtime s2n minute series is all zero; use summary/history source for northbound conclusions.';
+      }
     }
   }
 
