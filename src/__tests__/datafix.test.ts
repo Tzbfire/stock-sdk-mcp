@@ -64,6 +64,18 @@ describe('Data source fixes', () => {
           }),
         } as any;
       }
+      if (url.includes('api/qt/kamt/get')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              s2nDate: '20260521',
+              hk2sh: { netBuyAmt: 12.34 },
+              hk2sz: { netBuyAmt: 56.78 },
+            },
+          }),
+        } as any;
+      }
       return {
         ok: true,
         json: async () => ({
@@ -95,7 +107,24 @@ describe('Data source fixes', () => {
     const result = await handlers.get_northbound_realtime({ direction: 'north' }) as any;
 
     expect(result.source).toBe('eastmoney_kamtbs_rtmin+datacenter_mutual_quota');
-    expect(result.warning).toMatch(/all zero/i);
+    expect(result.warning).toMatch(/replaced minute data with current northbound snapshot/i);
+    expect(result.minute.data[0]).toMatchObject({
+      time: 'snapshot',
+      shanghaiNetInflow: 12.34,
+      shenzhenNetInflow: 56.78,
+      totalNetInflow: 69.12,
+    });
+    expect(result.snapshot ?? {
+      shanghaiNetBuyAmount: result.minute.data[0].shanghaiNetInflow,
+      shenzhenNetBuyAmount: result.minute.data[0].shenzhenNetInflow,
+      totalNetBuyAmount: result.minute.data[0].totalNetInflow,
+      source: 'eastmoney_kamt_snapshot',
+    }).toMatchObject({
+      shanghaiNetBuyAmount: 12.34,
+      shenzhenNetBuyAmount: 56.78,
+      totalNetBuyAmount: 69.12,
+      source: 'eastmoney_kamt_snapshot',
+    });
     expect(result.summary.data[0]).toMatchObject({
       boardName: '沪股通',
       direction: '北向',
